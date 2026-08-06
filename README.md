@@ -49,4 +49,4 @@ All documents, PDFs, OCR results, and reminders are created and stored locally o
 
 ## 📄 License
 
-This project is licensed under the terms of the [MIT License](./LICENSE).
+This project is licensed under the terms of the [GNU GPL 3.0 License](./LICENSE).
