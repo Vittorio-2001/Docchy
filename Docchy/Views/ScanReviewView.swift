@@ -73,7 +73,12 @@ struct ScanReviewView: View {
                             }
                             .padding(.horizontal)
 
-                            Text("Pagina \(index + 1) · tocca per ingrandire")
+                            Text(
+                                String(
+                                    format: String(localized: "Pagina %d · tocca per ingrandire"),
+                                    index + 1
+                                )
+                            )
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

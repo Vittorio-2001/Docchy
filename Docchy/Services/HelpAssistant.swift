@@ -15,9 +15,6 @@ struct FAQItem: Identifiable {
     let answer: String
 }
 
-/// Risponde alle domande sull'app cercando la corrispondenza migliore tra
-/// parole chiave predefinite (in italiano e in inglese). Nessuna rete,
-/// nessun modello linguistico: solo un confronto testuale locale.
 enum HelpAssistant {
 
     static let faq: [FAQItem] = [

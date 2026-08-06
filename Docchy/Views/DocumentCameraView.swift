@@ -9,9 +9,6 @@
 import SwiftUI
 import VisionKit
 
-/// Espone il mirino di scansione documenti nativo di Apple (VisionKit)
-/// a SwiftUI. Gestisce già rilevamento bordi, correzione prospettica
-/// e scan multi-pagina.
 struct DocumentCameraView: UIViewControllerRepresentable {
     var onFinish: ([UIImage]) -> Void
     var onCancel: () -> Void

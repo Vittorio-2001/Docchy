@@ -15,9 +15,6 @@ enum ImageExportFormat {
 
 enum ImageExporter {
 
-    /// Copia un file in una cartella temporanea usando il nome scelto dall'utente
-    /// (es. il titolo del documento) invece del nome interno generato allo scan.
-    /// Usato per far comparire il nome giusto quando si condivide il PDF originale.
     static func renamedCopy(of sourceURL: URL, as baseName: String, extension fileExtension: String) throws -> URL {
         let safeName = baseName.replacingOccurrences(of: "/", with: "-")
         let tempDir = FileManager.default.temporaryDirectory
@@ -29,9 +26,7 @@ enum ImageExporter {
         return destinationURL
     }
 
-    /// Estrae ogni pagina del PDF come immagine e la salva in una cartella
-    /// temporanea nel formato richiesto. Ritorna gli URL dei file generati,
-    /// pronti per essere condivisi (es. tramite share sheet).
+
     static func exportPages(from pdfURL: URL, format: ImageExportFormat, baseName: String) throws -> [URL] {
         guard let document = PDFDocument(url: pdfURL) else {
             throw NSError(domain: "ImageExporter", code: 1,
@@ -66,7 +61,6 @@ enum ImageExporter {
 }
 
 extension PDFPage {
-    /// Rasterizza la pagina PDF in una UIImage ad alta risoluzione
     func rasterized(scale: CGFloat) -> UIImage {
         let pageBounds = bounds(for: .mediaBox)
         let size = CGSize(width: pageBounds.width * scale, height: pageBounds.height * scale)

@@ -8,8 +8,6 @@
 import Foundation
 import UserNotifications
 
-/// Pianifica promemoria locali (nessun server, nessun account) per le
-/// scadenze dei documenti, usando UNUserNotificationCenter.
 enum ReminderScheduler {
 
     static func requestAuthorizationIfNeeded() async -> Bool {
@@ -26,8 +24,6 @@ enum ReminderScheduler {
         }
     }
 
-    /// Pianifica un promemoria un tot di giorni prima della scadenza.
-    /// Se esiste gia' un promemoria per lo stesso documento, lo sostituisce.
     static func scheduleReminder(for document: ScannedDocument, daysBefore: Int = 7) async {
         cancelReminder(for: document)
 
@@ -47,13 +43,10 @@ enum ReminderScheduler {
 
         let trigger: UNNotificationTrigger
         if idealTriggerDate > Date() {
-            // Preavviso normale: il giorno calcolato, alle 9 del mattino
             var components = Calendar.current.dateComponents([.year, .month, .day], from: idealTriggerDate)
             components.hour = 9
             trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         } else {
-            // La scadenza e' troppo vicina per il preavviso standard: avvisa comunque a breve
-            // invece di non pianificare nulla (un trigger a intervallo e' sempre nel futuro).
             trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
         }
 

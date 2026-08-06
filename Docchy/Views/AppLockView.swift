@@ -8,9 +8,6 @@
 
 import SwiftUI
 
-/// Avvolge il contenuto principale dell'app e mostra una schermata di blocco
-/// (con Face ID/Touch ID) quando l'utente ha attivato l'impostazione, sia
-/// all'avvio sia ogni volta che l'app torna in primo piano.
 struct AppLockView<Content: View>: View {
     @AppStorage("isFaceIDLockEnabled") private var isLockEnabled = false
     @Environment(\.scenePhase) private var scenePhase
@@ -57,7 +54,6 @@ struct AppLockView<Content: View>: View {
     }
 }
 
-/// Schermata mostrata mentre l'app e' bloccata: mascotte + pulsante per sbloccare.
 private struct LockScreenView: View {
     let authFailed: Bool
     let onUnlock: () -> Void

@@ -9,9 +9,6 @@
 import SwiftUI
 import UIKit
 
-/// Share sheet nativo per condividere/esportare file (PDF o immagini).
-/// Usato al posto di ShareLink quando gli item da condividere vengono
-/// generati dinamicamente al momento del tocco (es. conversione in JPEG/PNG).
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
 

@@ -8,9 +8,6 @@
 
 import Foundation
 
-/// Cerca nel testo riconosciuto dall'OCR una possibile data di scadenza,
-/// dando priorita' alle date vicine a parole chiave come "scadenza",
-/// "valido fino", "expiry". Nessuna rete, nessun modello: solo NSDataDetector.
 enum DateDetector {
 
     static func detectExpirationDate(in text: String) -> Date? {
@@ -24,7 +21,6 @@ enum DateDetector {
 
         let keywords = ["scad", "valid", "expir"]
 
-        // 1. Cerca una data preceduta da una parola chiave di scadenza/validita'
         for match in matches {
             guard let date = match.date, let range = Range(match.range, in: text) else { continue }
             let contextStart = text.index(range.lowerBound, offsetBy: -30, limitedBy: text.startIndex) ?? text.startIndex
@@ -34,7 +30,6 @@ enum DateDetector {
             }
         }
 
-        // 2. Altrimenti, se c'e' esattamente una data futura nel testo, usa quella
         let futureDates = matches.compactMap(\.date).filter { $0 > Date() }
         if futureDates.count == 1 {
             return futureDates.first

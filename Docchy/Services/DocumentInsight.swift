@@ -14,8 +14,6 @@ struct DocumentInsight {
     let hasReadableText: Bool
 }
 
-/// Esegue il riconoscimento del testo (OCR) sulle pagine scansionate usando
-/// il framework Vision di Apple: tutto on-device, nessuna rete, nessun costo.
 enum DocumentAnalyzer {
 
     static func analyze(pages: [UIImage]) async -> DocumentInsight {
@@ -30,8 +28,6 @@ enum DocumentAnalyzer {
         }
 
         let combined = recognizedPages.joined(separator: "\n")
-        // Soglia minima: sotto una certa lunghezza consideriamo la scansione poco leggibile
-        // (es. foto sfocata, documento capovolto, pagina quasi vuota)
         let hasReadableText = combined.trimmingCharacters(in: .whitespacesAndNewlines).count >= 20
 
         return DocumentInsight(recognizedText: combined, hasReadableText: hasReadableText)

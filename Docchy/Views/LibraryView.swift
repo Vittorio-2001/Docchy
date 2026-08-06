@@ -38,27 +38,41 @@ struct LibraryView: View {
                     ContentUnavailableView.search(text: searchText)
                 } else {
                     List {
-                        ForEach(filteredDocuments) { document in
-                            rowLink(for: document)
-                                .contextMenu {
-                                    Button {
-                                        renameText = document.title
-                                        documentBeingRenamed = document
-                                    } label: {
-                                        Label("Rinomina", systemImage: "pencil")
-                                    }
-
-                                    Button {
-                                        toggleLock(for: document)
-                                    } label: {
-                                        Label(
-                                            document.isLocked ? "Rimuovi blocco" : "Blocca con Face ID",
-                                            systemImage: document.isLocked ? "lock.open" : "lock"
-                                        )
-                                    }
-                                }
+                        if searchText.isEmpty, let expiringSoonDocument {
+                            Section {
+                                expiringSoonCallout(for: expiringSoonDocument)
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
                         }
-                        .onDelete(perform: delete)
+
+                        ForEach(groupedDocuments, id: \.title) { group in
+                            Section(group.title) {
+                                ForEach(group.documents) { document in
+                                    rowLink(for: document)
+                                        .contextMenu {
+                                            Button {
+                                                renameText = document.title
+                                                documentBeingRenamed = document
+                                            } label: {
+                                                Label("Rinomina", systemImage: "pencil")
+                                            }
+
+                                            Button {
+                                                toggleLock(for: document)
+                                            } label: {
+                                                Label(
+                                                    document.isLocked ? "Rimuovi blocco" : "Blocca con Face ID",
+                                                    systemImage: document.isLocked ? "lock.open" : "lock"
+                                                )
+                                            }
+                                        }
+                                }
+                                .onDelete { offsets in
+                                    delete(from: group.documents, at: offsets)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -132,8 +146,6 @@ struct LibraryView: View {
         }
     }
 
-    /// Riga del documento: se e' bloccato, il tocco richiede Face ID prima di
-    /// navigare al dettaglio; altrimenti si comporta come un normale link.
     @ViewBuilder
     private func rowLink(for document: ScannedDocument) -> some View {
         if document.isLocked {
@@ -148,6 +160,49 @@ struct LibraryView: View {
                 DocumentRow(document: document, searchText: searchText)
             }
         }
+    }
+
+    @ViewBuilder
+    private func expiringSoonCallout(for document: ScannedDocument) -> some View {
+        Button {
+            if document.isLocked {
+                attemptUnlock(document)
+            } else {
+                navigationPath.append(document)
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "bell.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("1 documento in scadenza")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.primary)
+                    if let expirationDate = document.expirationDate {
+                        Text("\(document.title) · \(relativeDaysText(for: expirationDate))")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+            }
+            .padding(12)
+            .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func relativeDaysText(for date: Date) -> String {
+        let calendar = Calendar.current
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: .now),
+            to: calendar.startOfDay(for: date)
+        ).day ?? 0
+
+        if days <= 0 { return String(localized: "oggi") }
+        if days == 1 { return String(localized: "domani") }
+        return String(format: String(localized: "tra %d giorni"), days)
     }
 
     private func attemptUnlock(_ document: ScannedDocument) {
@@ -188,9 +243,50 @@ struct LibraryView: View {
         }
     }
 
-    private func delete(at offsets: IndexSet) {
+    private var groupedDocuments: [(title: String, documents: [ScannedDocument])] {
+        let calendar = Calendar.current
+        let now = Date()
+        let weekAgo = calendar.date(byAdding: .day, value: -7, to: now)
+
+        var order: [String] = []
+        var groups: [String: [ScannedDocument]] = [:]
+
+        for document in filteredDocuments {
+            let sectionTitle: String
+            if calendar.isDateInToday(document.createdAt) {
+                sectionTitle = String(localized: "Oggi")
+            } else if calendar.isDateInYesterday(document.createdAt) {
+                sectionTitle = String(localized: "Ieri")
+            } else if let weekAgo, document.createdAt > weekAgo {
+                sectionTitle = String(localized: "Questa settimana")
+            } else {
+                sectionTitle = String(localized: "Precedenti")
+            }
+
+            if groups[sectionTitle] == nil {
+                order.append(sectionTitle)
+            }
+            groups[sectionTitle, default: []].append(document)
+        }
+
+        return order.map { (title: $0, documents: groups[$0] ?? []) }
+    }
+
+    private var expiringSoonDocument: ScannedDocument? {
+        let now = Date()
+        guard let horizon = Calendar.current.date(byAdding: .day, value: 14, to: now) else { return nil }
+
+        return documents
+            .filter { document in
+                guard let expirationDate = document.expirationDate else { return false }
+                return expirationDate > now && expirationDate <= horizon
+            }
+            .min { ($0.expirationDate ?? .distantFuture) < ($1.expirationDate ?? .distantFuture) }
+    }
+
+    private func delete(from group: [ScannedDocument], at offsets: IndexSet) {
         for index in offsets {
-            let document = filteredDocuments[index]
+            let document = group[index]
             PDFBuilder.deleteFile(named: document.fileName)
             modelContext.delete(document)
         }
@@ -204,12 +300,7 @@ private struct DocumentRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                Image(systemName: "doc.text")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 38, height: 48)
-                    .background(.fill.tertiary)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                DocumentThumbnailView(document: document)
 
                 if document.isLocked {
                     Image(systemName: "lock.fill")
@@ -224,7 +315,13 @@ private struct DocumentRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(document.title)
                     .font(.subheadline.weight(.medium))
-                Text("\(document.createdAt.formatted(date: .abbreviated, time: .omitted)) · \(document.pageCount) pagine")
+                Text(
+                    String(
+                        format: String(localized: "%@ · %d pagine"),
+                        document.createdAt.formatted(date: .abbreviated, time: .omitted),
+                        document.pageCount
+                    )
+                )
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 if let expirationDate = document.expirationDate {
@@ -243,8 +340,6 @@ private struct DocumentRow: View {
         .foregroundStyle(.primary)
     }
 
-    /// Se la ricerca trova il termine nel testo OCR ma non nel titolo,
-    /// mostra un piccolo estratto per far capire perche' il documento e' comparso.
     private var contentMatchSnippet: String? {
         guard !searchText.isEmpty,
               !document.title.localizedCaseInsensitiveContains(searchText),

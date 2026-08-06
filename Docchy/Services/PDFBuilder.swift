@@ -10,9 +10,6 @@ import PDFKit
 
 enum PDFBuilder {
 
-    /// Combina un array di immagini (una per pagina) in un singolo PDF
-    /// e lo salva nella cartella Documents dell'app.
-    /// Ritorna il nome del file generato.
     static func makePDF(from images: [UIImage]) throws -> String {
         let pdfDocument = PDFDocument()
 

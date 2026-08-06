@@ -7,9 +7,6 @@
 
 import LocalAuthentication
 
-/// Autenticazione biometrica (Face ID/Touch ID, con fallback al codice del
-/// dispositivo) usata per aprire o rimuovere il blocco di un documento.
-/// Tutto on-device: nessun dato lascia il dispositivo.
 enum AuthenticationManager {
 
     static var isBiometricAuthAvailable: Bool {

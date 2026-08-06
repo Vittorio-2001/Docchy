@@ -143,16 +143,11 @@ struct DocumentDetailView: View {
     }
 }
 
-/// Wrapper Identifiable per gli item da condividere: usare .sheet(item:)
-/// invece di .sheet(isPresented:) + una variabile separata evita che la
-/// prima presentazione mostri lo share sheet vuoto (i due stati non sono
-/// garantiti come un unico aggiornamento atomico in SwiftUI).
 private struct ShareItems: Identifiable {
     let id = UUID()
     let items: [Any]
 }
 
-/// Wrapper minimale di PDFView (PDFKit) per SwiftUI
 private struct PDFKitView: UIViewRepresentable {
     let url: URL
 
@@ -166,8 +161,6 @@ private struct PDFKitView: UIViewRepresentable {
     func updateUIView(_ uiView: PDFView, context: Context) {}
 }
 
-/// Sheet per impostare, modificare o rimuovere il promemoria di scadenza
-/// di un documento gia' salvato.
 private struct ReminderEditView: View {
     @Bindable var document: ScannedDocument
     @Environment(\.dismiss) private var dismiss
